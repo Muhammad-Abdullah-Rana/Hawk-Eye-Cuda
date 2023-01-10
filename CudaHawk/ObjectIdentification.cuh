@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "Base.h"
-#include "Object.h"
+#include "Object.cuh"
 
 /// <summary>
 /// Travers row and check all 255/ white color bounds
@@ -16,8 +16,139 @@
 /// <param name="cols">total cols in img</param>
 /// <param name="ref">rows ref for active nodes to return or update</param>
 /// <returns></returns>
+/// 
 
-cudaError_t cuda_fit_transform(Mat& img,const int blvl) {
+
+__global__ void lightKernel(const int blvl)
+{
+    int i = threadIdx.x;
+    //c[i] = a[i] + b[i];
+    //rows[i] = ORow(i);
+
+    //cout << (int)(*tempMat).at<Vec3b>(i, 0)[0];
+    int gray = 0;
+    /*for (int c = 0; c < (*tempMat).cols; c++) {
+        *gray = (0.2989 * (int)(*tempMat).at<Vec3b>(i, c)[0]) + (0.5870 * (int)(*tempMat).at<Vec3b>(i, c)[1]) + (0.1140 * (int)(*tempMat).at<Vec3b>(i, c)[2]);
+        if (*gray < *blvl) rows[i].add(c);
+        else {
+            (*tempMat).at<Vec3b>(i, c) = (Vec3b)((uchar)0, (uchar)0, (uchar)0);
+        }
+    }*/
+}
+static inline void _safe_cuda_call(cudaError err, const char* msg, const char* file_name, const int line_number) {
+    if (err != cudaSuccess) {
+        fprintf(stderr, "%s\n\nFile: %s\n\nLine Number: %d\n\nReason: %s\n", msg, file_name, line_number, cudaGetErrorString(err));
+        std::cin.get();
+        exit(EXIT_FAILURE);
+    }
+}
+__global__ void bgr_to_gray_kernel(unsigned char* input, unsigned char* output, int width, int height, int colorWidthStep, int grayWidthStep) {
+    //2D Index of current thread
+    const int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
+    const int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+
+    //Only valid threads perform memory I/O
+    if ((xIndex < width) && (yIndex < height))
+    {
+        //Location of colored pixel in input
+        const int color_tid = yIndex * colorWidthStep + (3 * xIndex);
+
+        //Location of gray pixel in output
+        const int gray_tid = yIndex * grayWidthStep + xIndex;
+
+        const unsigned char blue = input[color_tid];
+        const unsigned char green = input[color_tid + 1];
+        const unsigned char red = input[color_tid + 2];
+
+        const float gray = red * 0.3f + green * 0.59f + blue * 0.11f;
+
+        output[gray_tid] = static_cast<unsigned char>(gray);
+    }
+}
+#define SAFE_CALL(call,msg) _safe_cuda_call((call),(msg),__FILE__,__LINE__)
+cudaError_t lightSegmentation(Mat& img, const int blvl) {
+    Mat output;
+    const int colorBytes = img.step * img.rows;
+    const int grayBytes = output.step * output.rows;
+
+    unsigned char* d_input, * d_output;
+
+    // Allocate device memory
+    SAFE_CALL(cudaMalloc<unsigned char>(&d_input, colorBytes), "CUDA Malloc Failed");
+    SAFE_CALL(cudaMalloc<unsigned char>(&d_output, grayBytes), "CUDA Malloc Failed");
+
+    // Copy data from OpenCV input image to device memory
+    SAFE_CALL(cudaMemcpy(d_input, img.ptr(), colorBytes, cudaMemcpyHostToDevice), "CUDA Memcpy Host To Device Failed");
+
+    // Specify a reasonable block size
+    const dim3 block(16, 16);
+
+    // Calculate grid size to cover the whole image
+    const dim3 grid((img.cols + block.x - 1) / block.x, (img.rows + block.y - 1) / block.y);
+
+    // Launch the color conversion kernel
+    bgr_to_gray_kernel << <grid, block >> > (d_input, d_output, img.cols, img.rows, img.step, output.step);
+
+    // Synchronize to check for any kernel launch errors
+    cudaDeviceSynchronize();
+
+    // Copy back data from destination device meory to OpenCV output image
+    SAFE_CALL(cudaMemcpy(output.ptr(), d_output, grayBytes, cudaMemcpyDeviceToHost), "CUDA Memcpy Host To Device Failed");
+
+    // Free the device memory
+    SAFE_CALL(cudaFree(d_input), "CUDA Free Failed");
+    SAFE_CALL(cudaFree(d_output), "CUDA Free Failed");
+    imshow("vid", output);
+    waitKey(5);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //cudaError_t cudaStatus;
+    //ORow *rows = 0;
+    //Mat *tempMat = 0;
+    //int *tempBlvl = 0;
+
+    //// Allocate GPU buffers for three vectors (two input, one output)
+    //cudaStatus = cudaMalloc((void**)&tempMat, sizeof(Mat));
+    //if (cudaStatus != cudaSuccess) {
+    //    fprintf(stderr, "cudaMalloc failed!");
+    //    return cudaStatus;
+    //}
+    //cudaStatus = cudaMalloc((void**)&rows, img.rows * sizeof(ORow));
+    //if (cudaStatus != cudaSuccess) {
+    //    fprintf(stderr, "cudaMalloc failed!");
+    //    return cudaStatus;
+    //}
+    //cudaStatus = cudaMalloc((void**)&tempBlvl, sizeof(int));
+    //if (cudaStatus != cudaSuccess) {
+    //    fprintf(stderr, "cudaMalloc failed!");
+    //    return cudaStatus;
+    //}
+    //cudaMalloc<
+    //lightKernel<<<1, img.rows>>>(*tempBlvl);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*int grayI = 0;
+    ORow* rowsI = new ORow[img.rows];
+    for (int r = 0; r < img.rows; r++) {
+        rowsI[r] = ORow(r);
+        for (int c = 0; c < img.cols; c++) {
+            grayI = (0.2989 * (int)img.at<Vec3b>(r, c)[0]) + (0.5870 * (int)img.at<Vec3b>(r, c)[1]) + (0.1140 * (int)img.at<Vec3b>(r, c)[2]);
+            if (grayI < blvl) rowsI[r].add(c);
+            else {
+                img.at<Vec3b>(r, c) = (Vec3b)((uchar)0, (uchar)0, (uchar)0);
+            }
+        }
+    }*/
+
+    return cudaSuccess;
+}
+
+
+
+cudaError_t cuda_fit_transform(Mat& img, const int blvl) {
+
 
     cudaError_t cudaStatus;
     cudaStatus = cudaSetDevice(0);
@@ -26,18 +157,20 @@ cudaError_t cuda_fit_transform(Mat& img,const int blvl) {
         //goto ERROR;
     }
 
-    int gray = 0;
-    ORow* rows = new ORow[img.rows];
-    for (int r = 0; r < img.rows; r++) {
-        rows[r] = ORow(r);
-        for (int c = 0; c < img.cols; c++) {
-            gray = (0.2989 * (int)img.at<Vec3b>(r, c)[0]) + (0.5870 * (int)img.at<Vec3b>(r, c)[1]) + (0.1140 * (int)img.at<Vec3b>(r, c)[2]);
-            if ( gray < blvl ) rows[r].add(c);
-            else {
-                img.at<Vec3b>(r, c) = (Vec3b)((uchar)0, (uchar)0, (uchar)0);
-            }
-        }
-    }
+    lightSegmentation(img, blvl);
+
+    //int gray = 0;
+    //ORow* rows = new ORow[img.rows];
+    //for (int r = 0; r < img.rows; r++) {
+    //    rows[r] = ORow(r);
+    //    for (int c = 0; c < img.cols; c++) {
+    //        gray = (0.2989 * (int)img.at<Vec3b>(r, c)[0]) + (0.5870 * (int)img.at<Vec3b>(r, c)[1]) + (0.1140 * (int)img.at<Vec3b>(r, c)[2]);
+    //        if ( gray < blvl ) rows[r].add(c);
+    //        else {
+    //            img.at<Vec3b>(r, c) = (Vec3b)((uchar)0, (uchar)0, (uchar)0);
+    //        }
+    //    }
+    //}
 
 
  /*
@@ -48,17 +181,17 @@ cudaError_t cuda_fit_transform(Mat& img,const int blvl) {
         goto ERROR;
     }
 
-    
+
  */
 
-    //for (int r = 0; r < img.rows; r++) {
-    //    for (int c = 0; c < rows[r].getSize(); c++) {
-    //        for(int b=0;b<rows[r].getBound(c).width();b++)
-    //        if (!rows[r].hasIt(c)) {
-    //            img.at<Vec3b>(r, c) = (Vec3b)((uchar)0, (uchar)0, (uchar)0);
-    //        }
-    //    }
-    //}
+ //for (int r = 0; r < img.rows; r++) {
+ //    for (int c = 0; c < rows[r].getSize(); c++) {
+ //        for(int b=0;b<rows[r].getBound(c).width();b++)
+ //        if (!rows[r].hasIt(c)) {
+ //            img.at<Vec3b>(r, c) = (Vec3b)((uchar)0, (uchar)0, (uchar)0);
+ //        }
+ //    }
+ //}
 
 ERROR:
     return cudaStatus;
