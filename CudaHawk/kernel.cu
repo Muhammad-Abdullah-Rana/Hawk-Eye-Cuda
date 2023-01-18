@@ -7,7 +7,7 @@ void cudaCall(VideoCapture& vid) {
     cudaError_t cudaStatus;
     vid.read(img);
     while (!img.empty()) {
-        cudaStatus = cudaFitTransform(img, 30);
+        cudaStatus = cudaFitTransform(img, 120);
         if (cudaStatus != cudaSuccess) {
             fprintf(stderr, "cuda failed!");
             return;
