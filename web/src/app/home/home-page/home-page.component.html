@@ -1,4 +1,4 @@
-<div id="welcome">
+<!-- <div id="welcome">
   <h1>
     Welcome
     <br>
@@ -7,4 +7,25 @@
 {{user?.profile?.name}}
 {{user?.profile?.role}}
   </h1>
+</div> -->
+
+<div id="welcome">
+  <div class="welcome-container">
+    <div>
+      <h1>
+        Hello!
+        <span>{{user?.profile?.name}}</span>
+      </h1>
+
+      <h2 class="subtitle">Welcome back to Hawkeye!</h2>
+
+      <p class="tagline">Securing Tomorrow, Today.</p>
+
+      <a class="cta-button" href="/video-player" type="button"> Play Video </a>
+    </div>
+
+    <div>
+      <img src="/assets/welcome.png" alt="" />
+    </div>
+  </div>
 </div>
