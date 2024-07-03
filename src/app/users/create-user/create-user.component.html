@@ -1,0 +1,67 @@
+<div id="createUserForm">
+    <h1>Create User</h1>
+    
+    <form [formGroup]="createUserFormGroup" (ngSubmit)="createUser()">
+      <div>
+        <mat-form-field>
+            <mat-label>Enter your first name</mat-label>
+            <input matInput placeholder="John" formControlName="fName" required>
+            @if (createUserFormGroup.get('fName').invalid) {
+            <mat-error>{{getFNameErrorMessage()}}</mat-error>
+            }
+        </mat-form-field>
+      </div>
+      
+      <div>
+        <mat-form-field>
+            <mat-label>Enter your last name</mat-label>
+            <input matInput placeholder="Doe" formControlName="lName" required>
+            @if (createUserFormGroup.get('lName').invalid) {
+            <mat-error>{{getLNameErrorMessage()}}</mat-error>
+            }
+        </mat-form-field>
+      </div>
+
+      <div>
+        <mat-form-field>
+            <mat-label>Enter your email</mat-label>
+            <input matInput placeholder="john.doe@example.com" formControlName="email" required>
+            @if (createUserFormGroup.get('email').invalid) {
+            <mat-error>{{getEmailErrorMessage()}}</mat-error>
+            }
+        </mat-form-field>
+      </div>
+  
+      <div>
+        <mat-form-field>
+            <mat-label>Enter your password</mat-label>
+            <input matInput [type]="hide ? 'password' : 'text'" formControlName="password">
+            <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide" type="submit">
+                <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+            @if (this.createUserFormGroup.get('password').invalid) {
+                <mat-error>{{getPasswordErrorMessage()}}</mat-error>
+            }
+        </mat-form-field>
+      </div>
+
+      <div>
+        <mat-form-field>
+            <mat-label>Enter your password</mat-label>
+            <input matInput [type]="hide ? 'password' : 'text'" formControlName="password">
+            <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide" type="submit">
+                <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+            @if (this.createUserFormGroup.get('password').invalid) {
+                <mat-error>{{getPasswordErrorMessage()}}</mat-error>
+            }
+        </mat-form-field>
+      </div>
+    
+      <div>
+        <button mat-raised-button color="primary">Create</button>
+      </div>
+    </form>
+    
+    <a routerLink="/users" routerLinkActive="active" >Return to user options</a>
+  </div>

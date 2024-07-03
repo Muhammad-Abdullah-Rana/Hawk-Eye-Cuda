@@ -1,0 +1,18 @@
+mat-toolbar{
+    justify-content: space-between;
+}
+.example-spacer {
+    flex: 1 1 auto;
+}
+#logo{
+    cursor: pointer;
+}
+#card{
+    border: 0;
+    box-shadow: none;
+    background-color: transparent;
+}
+.example-header-image {
+    background-size: cover;
+    margin-bottom: 0;
+}
