@@ -27,6 +27,9 @@ export class AppComponent implements OnInit {
     this.authService.getUser().then(user => {
       if(user){
         this.user = user;
+        document.getElementById("user").innerText = user?.profile?.name;
+        if(user?.profile?.role === 'Admin')
+          document.getElementById("addUser").hidden = false;
       }
     })
   }

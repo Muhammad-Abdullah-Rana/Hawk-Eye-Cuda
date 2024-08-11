@@ -193,7 +193,6 @@ void PersonDetection::save(const Mat& personImage, int id) {
 	if (_show) {
 		string str = "ID: ";
 		str += (id);
-		cv::imshow(str, personImage);
 	}
 }
 void PersonDetection::log(Person p, bool saveImg, Rect boundingRect) {
