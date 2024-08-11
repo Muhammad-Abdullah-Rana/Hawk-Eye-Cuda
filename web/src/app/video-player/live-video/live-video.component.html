@@ -1,3 +1,16 @@
-@for (video of videos; track $index){
+<!-- @for (video of videos; track $index){
     <img [id]="$index" [src]="video" alt="Image from WebSocket" />
+} -->
+
+
+<div class="video-player-screen">
+    <h1>VIDEOS FEED</h1>
+<div class="videos-container">
+@for (video of videos; track $index){
+    <div class="video">
+    <img [id]="$index" [src]="video" alt="Image from WebSocket" />
+    <h3>VIDEO # {{$index+1}}</h3>
+</div>
 }
+</div>
+</div>

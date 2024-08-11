@@ -1,5 +1,42 @@
-video{
-    :hover{
-        ;
+// video{
+//     :hover{
+//         ;
+//     }
+// }
+
+video {
+    :hover {
     }
-}
+  }
+  
+  .video-player-screen{
+      h1 {
+          text-align: center;
+          margin-top: 30px;
+          margin-bottom: 30px;
+          font-size: 50px;
+          font-weight: 500;
+          color: #673ab7;
+      }
+  .videos-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 90%;
+      max-width: 1500px;
+      margin: auto;
+      gap: 20px;
+      img, video {
+          max-width: 100%;
+          display: block;
+          border-radius: 10px;
+      }
+      h3 {
+          margin: 0;
+          font-style: italic;
+          font-weight: 500;
+          color: #673ab7;
+          line-height: 1;
+          margin-top: 10px;
+      }
+  }
+  }

@@ -45,7 +45,6 @@ public:
             return true;
         }
         vid.read(img);
-        cv::imshow("a", img);
 		if (segment.learning(img)) {
             if (imgCount++ >= 1000) {
                 segment.extraction(greyColorVals, true);
